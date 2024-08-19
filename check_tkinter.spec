@@ -4,7 +4,7 @@
 a = Analysis(
     ['check_tkinter.py'],
     pathex=[],
-    binaries=[('C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe', 'wkhtmltopdf/bin'), ('C:/Program Files/wkhtmltopdf/bin/wkhtmltoimage.exe', 'wkhtmltopdf/bin')],
+    binaries=[('C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe', './wkhtmltopdf/bin'), ('C:/Program Files/wkhtmltopdf/bin/wkhtmltoimage.exe', './wkhtmltopdf/bin')],
     datas=[],
     hiddenimports=[],
     hookspath=[],

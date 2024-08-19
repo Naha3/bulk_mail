@@ -1,3 +1,4 @@
+import base64
 import uuid
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -36,40 +37,13 @@ import time
 import os
 import ctypes
 
-def generate_unique_id(serial_number):
-    prefix = f"I{serial_number:04d}"
-    middle_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=7))
-    suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=12))
-    unique_sequence = f"{prefix}_{middle_part}_{suffix}"
-    return unique_sequence
+import requests
 
+# Suppress console window when calling subprocesses
+creationflags = subprocess.CREATE_NO_WINDOW
 
-def is_admin():
-    """Check if the script is running with administrative privileges."""
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
-        return False
+# Example for wkhtmltopdf
 
-def run_as_admin():
-    """Run the script as an administrator."""
-    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
-
-def install_wkhtmltopdf(install_dir):
-    """Install wkhtmltopdf and wkhtmltoimage."""
-    print("wkhtmltopdf not found. Installing...")
-    os.makedirs(install_dir, exist_ok=True)
-    download_url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.msvc2015-win64.exe"
-    installer_path = os.path.join(install_dir, "wkhtmltox_installer.exe")
-
-    print("Downloading wkhtmltopdf...")
-    urllib.request.urlretrieve(download_url, installer_path)
-
-    try:
-        print("Installing wkhtmltopdf...")
-        subprocess.run([installer_path, '/SILENT', '/VERYSILENT', f'/DIR={install_dir}'], check=True)
-    finally:
-        os.remove(installer_path)
 
 # def get_executable_path(filename):
 #     if getattr(sys, 'frozen', False):
@@ -82,15 +56,47 @@ def install_wkhtmltopdf(install_dir):
 #         raise FileNotFoundError(f"{filename} not found at {executable_path}. Ensure it is bundled correctly.")
 #     return executable_path
 
+def generate_unique_id(serial_number):
+    prefix = f"I{serial_number:04d}"
+    middle_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=7))
+    suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=12))
+    unique_sequence = f"{prefix}_{middle_part}_{suffix}"
+    return unique_sequence
+
+def install_wkhtmltopdf(install_dir):
+    """Install wkhtmltopdf and wkhtmltoimage."""
+    print("wkhtmltopdf not found. Installing...")
+    os.makedirs(install_dir, exist_ok=True)
+    download_url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.msvc2015-win64.exe"
+    installer_path = os.path.join(install_dir, "wkhtmltox_installer.exe")
+    print("Downloading wkhtmltopdf...")
+    urllib.request.urlretrieve(download_url, installer_path)
+    try:
+        print("Installing wkhtmltopdf...")
+        subprocess.run([installer_path, '/SILENT', '/VERYSILENT', f'/DIR={install_dir}'], check=True)
+    finally:
+        os.remove(installer_path)
+
+def is_admin():
+    """Check if the script is running with administrative privileges."""
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+def run_as_admin():
+    """Run the script as an administrator."""
+    ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+
 def check_and_install_wkhtmltopdf():
-    """Check if wkhtmltopdf and wkhtmltoimage are installed, otherwise install them."""
+    """Check if wkhtmltopdf and wkhtmltoimage are installed."""
     base_path = r'C:\Program Files\wkhtmltopdf'
+    # subprocess.run([wkhtmltopdf_path, 'input.html', 'output.pdf'], creationflags=creationflags)
     wkhtmltopdf_path = os.path.join(base_path, 'bin', 'wkhtmltopdf.exe')
     wkhtmltoimage_path = os.path.join(base_path, 'bin', 'wkhtmltoimage.exe')
 
     if not os.path.isfile(wkhtmltopdf_path) or not os.path.isfile(wkhtmltoimage_path):
         install_wkhtmltopdf(base_path)
-
     return wkhtmltopdf_path, wkhtmltoimage_path
 
 if not is_admin():
@@ -103,6 +109,8 @@ config_pdfkit = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
 config_imgkit = imgkit.config(wkhtmltoimage=wkhtmltoimage_path)
 
 print("wkhtmltopdf and wkhtmltoimage are set up successfully.")
+
+
 def convert_txt_to_pdf(txt_file_path, pdf_file_path):
     c = canvas.Canvas(pdf_file_path, pagesize=letter)
     width, height = letter
@@ -113,6 +121,12 @@ def convert_txt_to_pdf(txt_file_path, pdf_file_path):
         c.drawString(40, y, line.strip())
         y -= 15
     c.save()
+
+
+def encode_api_key(api_key, api_secret=''):
+    credentials = f'{api_key}:{api_secret}'
+    encoded_credentials = base64.b64encode(credentials.encode()).decode()
+    return encoded_credentials
 
 def authenticate_gmail(credentials_path):
     if not isinstance(credentials_path, str):
@@ -473,16 +487,48 @@ class BulkEmailApp:
             else:
                 print(f"Authentication failed for {credential_path}")
     
+   
+    # def convert_html_to_pdf(self, html_file, pdf_path):
+    #     try:
+    #         # Read the HTML content
+    #         with open(html_file, 'r', encoding='utf-8') as file:
+    #             html_content = file.read()
+            
+    #         # Set up the API request
+    #         url = 'https://api.pdf.co/v1/pdf/convert/from/html'
+    #         headers = {
+    #             'x-api-key': 'naha1691anlm@gmail.com_43BU8wTqmEC7mbo3e11QOJqrKIvoF92BjTaEoRZWXYAFTNxRYf4jJ8p7KWFjFsFd',
+    #             'Content-Type': 'application/json',
+    #         }
+    #         data = {
+    #             'html': html_content,
+    #             'name': pdf_path.split('/')[-1]
+    #         }
+
+    #         # Make the API request
+    #         response = requests.post(url, headers=headers, json=data)
+
+    #         if response.status_code == 200:
+    #             # Save the PDF to the specified path
+    #             with open(pdf_path, 'wb') as pdf_file:
+    #                 pdf_file.write(response.content)
+    #             print(f"PDF generated successfully at {pdf_path}")
+    #         else:
+    #             print(f"Error generating PDF: {response.content}")
+
+    #     except OSError as e:
+    #         print(f"Error reading HTML file: {e}")
+    #     except requests.RequestException as e:
+    #         print(f"Error making API request: {e}")
+
     def convert_html_to_pdf(self, html_file, pdf_path):
-        # Verbose output for debugging
         try:
             # Generate the PDF
-            pdfkit.from_file(html_file, pdf_path, configuration=config_pdfkit, verbose=True)
+            creationflags = subprocess.CREATE_NO_WINDOW
+            subprocess.run([wkhtmltopdf_path, html_file, pdf_path], creationflags=creationflags)
             print(f"PDF generated successfully at {pdf_path}")
         except OSError as e:
             print(f"Error generating PDF: {e}")
-
-        # Optional: Generate the CLI command for debugging
         try:
             pdf_kit_instance = pdfkit.PDFKit(html_file, 'file', configuration=config_pdfkit)
             cli_command = ' '.join(pdf_kit_instance.command())
@@ -497,11 +543,55 @@ class BulkEmailApp:
                 html_content = file.read()
                 print("HTML Content:", html_content)  # Debugging line to check HTML content
             # Convert HTML to image
-            imgkit.from_file(html_file_path, image_file_path, config=config_imgkit)
+            creationflags = subprocess.CREATE_NO_WINDOW
+            subprocess.run([wkhtmltoimage_path, html_file_path, image_file_path], creationflags=creationflags)
             print(f"Image generated successfully at {image_file_path}")
         except OSError as e:
             print(f"Error generating image: {e}")
     
+    # def convert_html_url_to_image(self, html_file_path, image_file_path):
+    #     try:
+    #         # Read the HTML content
+    #         with open(html_file_path, 'r', encoding='utf-8') as file:
+    #             html_content = file.read()
+    #             print("HTML Content:", html_content)  # Debugging line to check HTML content
+
+    #         # Use provided User ID and API Key
+    #         user_id = 'd9510d58-1313-4c45-aed6-37df4991a507'
+    #         api_key = '6a40d969-fc8e-4bed-b0c1-ac8e52a2ea8a'
+            
+    #         # Encode credentials in Base64 for Basic Authentication
+    #         credentials = f'{user_id}:{api_key}'
+    #         encoded_credentials = base64.b64encode(credentials.encode()).decode()
+            
+    #         # Set up the API request
+    #         url = 'https://hcti.io/v1/image'
+    #         headers = {
+    #             'Authorization': f'Basic {encoded_credentials}',
+    #             'Content-Type': 'application/json',
+    #         }
+    #         data = {
+    #             'html': html_content,
+    #         }
+
+    #         # Make the API request
+    #         response = requests.post(url, headers=headers, json=data)
+
+    #         if response.status_code == 200:
+    #             # Get the image URL from the response
+    #             image_url = response.json()['url']
+    #             # Download and save the image
+    #             img_data = requests.get(image_url).content
+    #             with open(image_file_path, 'wb') as img_file:
+    #                 img_file.write(img_data)
+    #             print(f"Image generated successfully at {image_file_path}")
+    #         else:
+    #             print(f"Error generating image: {response.content}")
+
+    #     except OSError as e:
+    #         print(f"Error reading HTML file: {e}")
+    #     except requests.RequestException as e:
+    #         print(f"Error making API request: {e}")
     
     def send_emails(self):
         subject = self.subject_var.get()
